@@ -10,6 +10,7 @@ import { db } from '@/firebaseConfig';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import {GradientBorderView} from './ui/GradientBorderView';
 
 export default function MenuItems() {
   const [isPressed, setIsPressed] = React.useState(false);
@@ -22,7 +23,6 @@ export default function MenuItems() {
   const [serviceNewItem, setServiceNewItem] = React.useState("");
 
   const fetchData = async () => {
-    console.log("Fetching data...");
     const querySnapshot = await getDocs(collection(db, "menuItems"));
     const items = querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -41,12 +41,20 @@ export default function MenuItems() {
   };
 
   const handlePress = (item) => {
-    // onPress();
-    console.log("Pressed: ", item.name);
+    // if this item is already selected, increase the count
+    // otherwise add count property to the item and add item to the selected items
+    let selectedItemsCopy = [...selectedItems];
+    let itemIndex = selectedItemsCopy.findIndex(i => i.id === item.id);
+    if (itemIndex !== -1) {
+      selectedItemsCopy[itemIndex].count++;
+    } else {
+      item.count = 1;
+      selectedItemsCopy.push(item);
+    }
+    setSelectedItems(selectedItemsCopy);
   };
 
   const handleAddItem = async () => {
-    console.log("Adding new item...", nameNewItem, priceNewItem, serviceNewItem);
     let menuItem = {
       name: nameNewItem,
       price: priceNewItem,
@@ -69,57 +77,76 @@ export default function MenuItems() {
     fetchData();
   }, []);
 
+  // Group items by their "service" property
+const groupedMenuItems = menuItems.reduce((groups, item) => {
+  if (!groups[item.service]) {
+    groups[item.service] = [];
+  }
+  groups[item.service].push(item);
+  return groups;
+}, {});
+
   return (
     <ThemedView>
-      <ThemedText type="subtitle">Menu Items</ThemedText>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 13, marginVertical: 15 }}>
-        {menuItems.map((item, index) => (
-          // <Card key={index} style={{backgroundColor: "#333", ...styles.cardStyle}}>
-          <Pressable key={index} onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => handlePress(item)} 
-            // style={{backgroundColor: "#333", ...styles.cardStyle}}>
-            style={({ pressed }) => [
-              {backgroundColor: pressed ? "#555" : "#333", elevation: pressed ? 2 : 5, ...styles.cardStyle}
-            ]}>
-            <CardHeader style={{height: 70}}>
-              <CardTitle style={{ textAlign: "center" }}>
-                <ThemedText type="defaultSemiBold" style={{color:"#ffd337"}}>{item.name}</ThemedText>
-              </CardTitle>
-              <View>
-                <ThemedText type="default" style={{color:"grey", textAlign: "center"}}>{item.service}</ThemedText>
-              </View>
-            </CardHeader>
-            <CardContent>
-              <CardDescription style={{ color: "white", textAlign: "center", marginVertical: 15 }}>
-                0
-              </CardDescription>
-            </CardContent>
-            <CardFooter style={{height: 40, borderTopWidth: 2, borderTopColor: "#444"}}>
-              <ThemedText style={{textAlign: "right", padding: 5}}>{item.price} MAD</ThemedText>
-            </CardFooter>
-          {/* </Card> */}
-          </Pressable>
-        ))}
-        {!addNewItem && menuItems.length !==0 &&
-          <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => setAddNewItem(true)}
-            style={({ pressed }) => [
-              {backgroundColor: pressed ? "#555" : "#333", ...styles.cardStyle}
-            ]}>
-            <CardContent style={{minHeight:100}}>
-              <CardDescription style={{textAlign: "center", marginVertical: 66}}>
-                <Ionicons name="add" size={24} color="#ffd337" />
-              </CardDescription>
-            </CardContent>
-          </Pressable>
-        }
+      <ThemedText type="title" style={{marginTop: 15}}>Menu Items</ThemedText>
+      {Object.keys(groupedMenuItems).map((service, i) => (
+        <View key={i}>
+          <ThemedText type='subtitle' style={{textAlign:"center"}}>{service}</ThemedText>
+          {/* Under this service add cards according to each service */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 13, marginVertical: 15 }}>
+            {groupedMenuItems[service].map((item, index) => (
+              <Pressable key={index} onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => handlePress(item)}
+                style={({ pressed }) => [
+                  {backgroundColor: pressed ? "#555" : "#333", elevation: pressed ? 2 : 5, ...styles.cardStyle}
+                ]}>
+                <CardHeader style={{height: 70}}>
+                  <CardTitle style={{ textAlign: "center" }}>
+                    <ThemedText type="defaultSemiBold" style={{color:"#ffd337"}}>{item.name}</ThemedText>
+                  </CardTitle>
+                  <View>
+                    <ThemedText type="default" style={{color:"grey", textAlign: "center"}}>{item.service}</ThemedText>
+                  </View>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription style={{ color: "white", textAlign: "center", marginVertical: 15, fontSize: 18 }}>
+                    {selectedItems.find(i => i.id === item.id) ? selectedItems.find(i => i.id === item.id).count : 0}
+                  </CardDescription>
+                </CardContent>
+                <CardFooter style={{height: 40, borderTopWidth: 2, borderTopColor: "#444"}}>
+                  <ThemedText type="defaultSemiBold" style={{textAlign: "right", padding: 5}}>{item.price} MAD</ThemedText>
+                </CardFooter>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
+
+      <View style={{marginVertical: 5}}>
+        <ThemedText type="subtitle" style={{textAlign: "center", marginVertical: 10}}>Add New Item</ThemedText>
+        <ThemedView style={{flexDirection: "row", justifyContent: "center"}}>
+          {!addNewItem && menuItems.length !==0 &&
+            <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => setAddNewItem(true)}
+              style={({ pressed }) => [
+                {backgroundColor: pressed ? "#555" : "#333", ...styles.cardStyle}
+              ]}>
+              <CardContent style={{minHeight:100}}>
+                <CardDescription style={{textAlign: "center", marginVertical: 66}}>
+                  <Ionicons name="add" size={24} color="#ffd337" />
+                </CardDescription>
+              </CardContent>
+            </Pressable>
+          }
+        </ThemedView>
       </View>
+      
       {menuItems.length === 0 && 
           <ThemedView style={{flex: 1, justifyContent: "center", alignItems: "center", height: "100%"}}>
             <ThemedText type="defaultSemiBold">Getting Menu Items from Database...</ThemedText>
           </ThemedView>
         }
       {addNewItem &&
-        <ThemedView style={{marginVertical: 10, borderWidth: 2, borderColor: "#8ddcf2", borderRadius: 15, padding: 20 }}>
-          <ThemedText type="subtitle" style={{textAlign: "center"}}>Add New Item:</ThemedText>
+        <ThemedView style={{marginVertical: 5, borderWidth: 2, borderColor: "#8ddcf2", borderRadius: 15, padding: 20 }}>
+          {/* <ThemedText type="subtitle" style={{textAlign: "center"}}>Add New Item:</ThemedText> */}
           <ThemedText type="defaultSemiBold">name:</ThemedText>
           <Input
             placeholder='Enter a name....'
@@ -131,7 +158,7 @@ export default function MenuItems() {
             style={{ color: 'white', borderWidth: 1, borderColor: 'white', borderRadius: 10, padding: 10 }}
             multiline
           />
-          <ThemedText type="defaultSemiBold">price:</ThemedText>
+          <ThemedText type="defaultSemiBold" style={{marginTop: 10}}>price:</ThemedText>
           <Input
             placeholder='Enter a price....'
             value={priceNewItem}
@@ -143,7 +170,7 @@ export default function MenuItems() {
             style={{ color: 'white', borderWidth: 1, borderColor: 'white', borderRadius: 10, padding: 10 }}
             multiline
           />
-          <ThemedText type="defaultSemiBold">service:</ThemedText>
+          <ThemedText type="defaultSemiBold" style={{marginTop: 10}}>service:</ThemedText>
           <Input
             placeholder='Enter a service....'
             value={serviceNewItem}

@@ -8,7 +8,7 @@ export function UserProvider({ children }) {
   const [selectedItems, setSelectedItems] = React.useState([]); // items bought by the customer
 
   return (
-    <UserContext.Provider value={{ userData, setUserData, value, setValue }}>
+    <UserContext.Provider value={{ userData, setUserData, value, setValue, selectedItems, setSelectedItems }}>
       {children}
     </UserContext.Provider>
   );
