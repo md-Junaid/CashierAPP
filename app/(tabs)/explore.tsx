@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform, SafeAreaView, StatusBar,View } from 'react-native';
-import { useContext } from 'react';
+import { StyleSheet, Image, Platform, SafeAreaView, StatusBar,View, ScrollView, Text } from 'react-native';
+import { useContext, useEffect, useState } from 'react';
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -9,40 +9,109 @@ import { ThemedView } from '@/components/ThemedView';
 import { UserContext } from '@/components/UserContext';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { db } from '@/firebaseConfig';
 
 export default function TabTwoScreen() {
-  const { value } = useContext(UserContext);
+  const { value, selectedItems, setValue, setSelectedItems } = useContext(UserContext);
+  const [allOrders, setAllOrders] = useState([]);
+
+  const fetchOrders = async () => {
+    const querySnapshot = await getDocs(collection(db, "orders"));
+    const items = querySnapshot.docs.map(doc => ({
+      ...doc.data()
+    }));
+
+    setAllOrders(items[0]);
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [])
+
+  // useEffect(() => {
+  //   console.log("all orders: ", allOrders);
+  // }, [allOrders])
+
+  const onSave = async () => {
+    const order = {
+      customer: value,
+      items: selectedItems,
+      paid: false
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, "orders"), order);
+      console.log("Order saved with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+    onCancel();
+  }
+
+  const onPaySave = async () => {
+    const order = {
+      customer: value,
+      items: selectedItems,
+      paid: true
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, "orders"), order);
+      console.log("Order saved with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+
+    onCancel();
+  }
+
+  const onCancel = () => {
+    setValue("");
+    setSelectedItems([]);
+  }
+
   return (
-    // <ParallaxScrollView
-    //   headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-    //   headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-    <ThemedView style={{flex: 1, padding: 26, overflow: "hidden", gap: 16, paddingTop: StatusBar.currentHeight, marginTop: 10}}>
+    <ThemedView style={{paddingTop: StatusBar.currentHeight, flex: 1, padding: 26, overflow: "hidden", gap: 16, marginTop: 10}}>
+    <ScrollView>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Shopping Cart</ThemedText>
         <Ionicons size={32} name="cart-outline" color="white" />
       </ThemedView>
-      <Card style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey"}}>
+      <Card style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey", marginVertical: 20}}>
         <CardContent>
-          <ThemedText>{value} buys the following items...</ThemedText>
+          <ThemedText type="defaultSemiBold"><Text style={{color: "#8ddcf2"}}>{value.length===0?"___________": value}</Text> buys the following items:</ThemedText>
+          {selectedItems.map((item, index) => (
+            <View key={index} style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 7}}>
+              <ThemedText type="defaultSemiBold">{item.name} (x{item.count})</ThemedText>
+              <ThemedText type="defaultSemiBold">{item.count * item.price} MAD</ThemedText>
+            </View>
+          ))}
         </CardContent>
-        <CardFooter style={{flexDirection:"row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 25}}>
+        <CardFooter style={{flexDirection:"row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 20}}>
           <View style={{flexDirection:"row", flexWrap: "wrap"}}>
             <Button
               style={{borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
-              onPress={() => console.log("Cancel")}
+              onPress={onCancel}
             >
               <ThemedText type="defaultSemiBold">Cancel</ThemedText>
             </Button>
             <Button
-              style={{backgroundColor: "#00b253", borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
-              onPress={() => console.log("Save")}
+              style={{backgroundColor: selectedItems.length === 0 || value.length === 0 ? "grey" : "#00b253", 
+                borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10
+              }}
+              onPress={onSave}
+              disabled={selectedItems.length === 0 || value.length === 0}
             >
               <ThemedText type="defaultSemiBold">Save</ThemedText>
             </Button>
           </View>
           <Button
-            style={{backgroundColor: "#00b253", borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
-            onPress={() => console.log("Pay & Save")}
+            style={{backgroundColor: selectedItems.length === 0 || value.length === 0 ? "grey" : "#00b253", 
+              borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10
+            }}
+            onPress={onPaySave}
+            disabled={selectedItems.length === 0 || value.length === 0}
           >
             <ThemedText type="defaultSemiBold">Pay & Save</ThemedText>
           </Button>
@@ -116,7 +185,7 @@ export default function TabTwoScreen() {
           ),
         })}
       </Collapsible>
-    {/* </ParallaxScrollView> */}
+    </ScrollView>
     </ThemedView>
   );
 }
