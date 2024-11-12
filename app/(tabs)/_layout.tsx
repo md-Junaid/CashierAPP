@@ -26,7 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
+          title: 'Orders',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'cart-sharp' : 'cart-outline'} color={color} />
           ),

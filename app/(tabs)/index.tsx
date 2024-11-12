@@ -36,7 +36,7 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+        <ThemedText type="title" style={{fontSize:30}}>Welcome ChillSurfer</ThemedText>
         <HelloWave />
       </ThemedView>
       <ThemedView>

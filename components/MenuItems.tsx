@@ -88,7 +88,7 @@ const groupedMenuItems = menuItems.reduce((groups, item) => {
 
   return (
     <ThemedView>
-      <ThemedText type="title" style={{marginTop: 15}}>Menu Items</ThemedText>
+      <ThemedText type="title" style={{marginTop: 15, fontSize:30}}>Menu Items</ThemedText>
       {Object.keys(groupedMenuItems).map((service, i) => (
         <View key={i}>
           <ThemedText type='subtitle' style={{textAlign:"center"}}>{service}</ThemedText>

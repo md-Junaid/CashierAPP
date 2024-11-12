@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { UserContext } from '@/components/UserContext';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { addDoc, collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 
 export default function TabTwoScreen() {
@@ -19,10 +19,11 @@ export default function TabTwoScreen() {
   const fetchOrders = async () => {
     const querySnapshot = await getDocs(collection(db, "orders"));
     const items = querySnapshot.docs.map(doc => ({
+      id: doc.id,
       ...doc.data()
     }));
 
-    setAllOrders(items[0]);
+    setAllOrders(items);
   };
 
   useEffect(() => {
@@ -42,10 +43,12 @@ export default function TabTwoScreen() {
 
     try {
       const docRef = await addDoc(collection(db, "orders"), order);
-      console.log("Order saved with ID: ", docRef.id);
+      // console.log("Order saved with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
     }
+
+    fetchOrders();
     onCancel();
   }
 
@@ -53,17 +56,33 @@ export default function TabTwoScreen() {
     const order = {
       customer: value,
       items: selectedItems,
-      paid: true
+      paid: true,
+      time: new Date().getTime()
     }
 
     try {
       const docRef = await addDoc(collection(db, "orders"), order);
-      console.log("Order saved with ID: ", docRef.id);
+      // console.log("Order saved with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
     }
 
+    fetchOrders();
     onCancel();
+  }
+
+  const onJustPay = async (order) => {
+    order.paid = true;
+    order.time = new Date().getTime();
+    // update the order in the database
+    try {
+      const docRef = doc(db, "orders", order.id);
+      await updateDoc(docRef, order);
+    }
+    catch (e) {
+      console.error("Error updating document: ", e);
+    }
+    fetchOrders();
   }
 
   const onCancel = () => {
@@ -71,34 +90,45 @@ export default function TabTwoScreen() {
     setSelectedItems([]);
   }
 
+  const convertUnixTime = (time) => {
+    const date = new Date(time);
+    return date.toLocaleString();
+  }
+
   return (
-    <ThemedView style={{paddingTop: StatusBar.currentHeight, flex: 1, padding: 26, overflow: "hidden", gap: 16, marginTop: 10}}>
+    <ThemedView style={{paddingTop: StatusBar.currentHeight, flex: 1, padding: 26, overflow: "hidden", gap: 16}}>
     <ScrollView>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Shopping Cart</ThemedText>
         <Ionicons size={32} name="cart-outline" color="white" />
       </ThemedView>
-      <Card style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey", marginVertical: 20}}>
+      <Card style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey", marginVertical: 10}}>
         <CardContent>
           <ThemedText type="defaultSemiBold"><Text style={{color: "#8ddcf2"}}>{value.length===0?"___________": value}</Text> buys the following items:</ThemedText>
-          {selectedItems.map((item, index) => (
-            <View key={index} style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 7}}>
-              <ThemedText type="defaultSemiBold">{item.name} (x{item.count})</ThemedText>
-              <ThemedText type="defaultSemiBold">{item.count * item.price} MAD</ThemedText>
-            </View>
-          ))}
+          <View style={{marginTop:8}}>
+            {selectedItems.map((item, index) => (
+              <View key={index} style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 2}}>
+                <ThemedText type="defaultSemiBold">{item.name} (x{item.count})</ThemedText>
+                <ThemedText type="defaultSemiBold">{item.count * item.price} MAD</ThemedText>
+              </View>
+            ))}
+          </View>
+          <View style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 8}}>
+            <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>Total:</ThemedText>
+            <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>{selectedItems.reduce((acc, item) => acc + item.count * item.price, 0)} MAD</ThemedText>
+          </View>
         </CardContent>
-        <CardFooter style={{flexDirection:"row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 20}}>
+        <CardFooter style={{flexDirection:"row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 15}}>
           <View style={{flexDirection:"row", flexWrap: "wrap"}}>
             <Button
-              style={{borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
+              style={{borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 8}}
               onPress={onCancel}
             >
               <ThemedText type="defaultSemiBold">Cancel</ThemedText>
             </Button>
             <Button
               style={{backgroundColor: selectedItems.length === 0 || value.length === 0 ? "grey" : "#00b253", 
-                borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10
+                borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 15
               }}
               onPress={onSave}
               disabled={selectedItems.length === 0 || value.length === 0}
@@ -117,59 +147,67 @@ export default function TabTwoScreen() {
           </Button>
         </CardFooter>
       </Card>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
+
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Order History</ThemedText>
+        <Ionicons size={32} name="document-text-outline" color="white" />
+      </ThemedView>
+      <Collapsible title="Not Paid Orders">
+          {allOrders.filter(order => !order.paid).map((order, index) => (
+            <Card key={index} style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey", marginVertical: 10}}>
+              <CardContent>
+                <ThemedText type="defaultSemiBold">{order.customer} bought the following items:</ThemedText>
+                <View style={{marginTop:8}}>
+                  {order.items.map((item, j) => (
+                    <View key={j} style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 2}}>
+                      <ThemedText type="defaultSemiBold">{item.name} (x{item.count})</ThemedText>
+                      <ThemedText type="defaultSemiBold">{item.count * item.price} MAD</ThemedText>
+                    </View>
+                  ))}
+                </View>
+                <View style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 8}}>
+                  <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>Total:</ThemedText>
+                  <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>{order.items.reduce((acc, item) => acc + item.count * item.price, 0)} MAD</ThemedText>
+                </View>
+              </CardContent>
+              <CardFooter style={{marginTop: 10}}>
+                <Button
+                  style={{backgroundColor: "#00b253", borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
+                  onPress={() => onJustPay(order)}
+                >
+                  <ThemedText type="defaultSemiBold" style={{textAlign:"center"}}>Pay</ThemedText>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
       </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
+
+      <Collapsible title="Paid Orders">
+        {allOrders.filter(order => order.paid).map((order, index) => (
+          <Card key={index} style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey", marginVertical: 10}}>
+            <CardContent>
+              <ThemedText type="defaultSemiBold">{order.customer} bought the following items:</ThemedText>
+              <View style={{marginTop:8}}>
+                {order.items.map((item, j) => (
+                  <View key={j} style={{flexDirection: "row", justifyContent: "space-between", marginTop: 2}}>
+                    <ThemedText type="defaultSemiBold">{item.name} (x{item.count})</ThemedText>
+                    <ThemedText type="defaultSemiBold">{item.count * item.price} MAD</ThemedText>
+                  </View>
+                ))}
+              </View>
+              <View style={{flexDirection: "row", justifyContent: "space-between", marginVertical: 8}}>
+                <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>Total:</ThemedText>
+                <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>{order.items.reduce((acc, item) => acc + item.count * item.price, 0)} MAD</ThemedText>
+              </View>
+            </CardContent>
+            <CardFooter style={{marginTop: 0}}>
+              <ThemedText type="default" style={{fontSize:13, color: "lightgrey"}}>Paid on: {convertUnixTime(order.time)}</ThemedText>
+            </CardFooter>
+          </Card>
+        ))}
       </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
+      
+      {/* <Collapsible title="Animations">
         <ThemedText>
           This template includes an example of an animated component. The{' '}
           <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
@@ -184,7 +222,8 @@ export default function TabTwoScreen() {
             </ThemedText>
           ),
         })}
-      </Collapsible>
+      </Collapsible> */}
+
     </ScrollView>
     </ThemedView>
   );
@@ -200,5 +239,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 20
   },
 });
