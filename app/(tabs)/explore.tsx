@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
+import { StyleSheet, Image, Platform, SafeAreaView, StatusBar,View } from 'react-native';
 import { useContext } from 'react';
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
@@ -7,17 +7,47 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { UserContext } from '@/components/UserContext';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function TabTwoScreen() {
   const { value } = useContext(UserContext);
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
+    // <ParallaxScrollView
+    //   headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+    //   headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
+    <ThemedView style={{flex: 1, padding: 26, overflow: "hidden", gap: 16, paddingTop: StatusBar.currentHeight, marginTop: 10}}>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
+        <ThemedText type="title">Shopping Cart</ThemedText>
+        <Ionicons size={32} name="cart-outline" color="white" />
       </ThemedView>
-      <ThemedText>{value} buys the following items...</ThemedText>
+      <Card style={{backgroundColor: "#333", padding: 18, borderRadius: 25, borderWidth: 1, borderColor: "grey"}}>
+        <CardContent>
+          <ThemedText>{value} buys the following items...</ThemedText>
+        </CardContent>
+        <CardFooter style={{flexDirection:"row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 25}}>
+          <View style={{flexDirection:"row", flexWrap: "wrap"}}>
+            <Button
+              style={{borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
+              onPress={() => console.log("Cancel")}
+            >
+              <ThemedText type="defaultSemiBold">Cancel</ThemedText>
+            </Button>
+            <Button
+              style={{backgroundColor: "#00b253", borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
+              onPress={() => console.log("Save")}
+            >
+              <ThemedText type="defaultSemiBold">Save</ThemedText>
+            </Button>
+          </View>
+          <Button
+            style={{backgroundColor: "#00b253", borderRadius: 10, borderRadius: 15, padding: 5, paddingHorizontal: 10}}
+            onPress={() => console.log("Pay & Save")}
+          >
+            <ThemedText type="defaultSemiBold">Pay & Save</ThemedText>
+          </Button>
+        </CardFooter>
+      </Card>
       <Collapsible title="File-based routing">
         <ThemedText>
           This app has two screens:{' '}
@@ -86,7 +116,8 @@ export default function TabTwoScreen() {
           ),
         })}
       </Collapsible>
-    </ParallaxScrollView>
+    {/* </ParallaxScrollView> */}
+    </ThemedView>
   );
 }
 

@@ -39,7 +39,8 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
-      {/* <ThemedView style={styles.inputContainer}> */}
+      <ThemedView>
+        <ThemedText type="subtitle">Customer's Name:</ThemedText>
         <Input
           placeholder='Enter a name....'
           value={value}
@@ -47,7 +48,7 @@ export default function HomeScreen() {
           aria-labelledby='inputLabel'
           aria-errormessage='inputError'
           placeholderTextColor={'grey'}
-          style={{ color: 'white', borderWidth: 1, borderColor: 'white', borderRadius: 10, padding: 10 }}
+          style={{ color: 'white', borderWidth: 1, borderColor: 'white', borderRadius: 10, padding: 10, marginTop: 10, marginBottom: 20 }}
           multiline
         />
         {/* <Button
@@ -86,8 +87,8 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
           Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatibus facere nam dolores atque quam facilis delectus est, necessitatibus ullam corporis, modi velit et, recusandae aspernatur soluta itaque quibusdam. Culpa dicta blanditiis molestiae ad facilis ullam quis odio, perferendis officiis? Corporis numquam repudiandae ullam eius ratione repellendus exercitationem nemo, illo, distinctio explicabo ut. Architecto aut iure commodi voluptate odio placeat eius.
-        </ThemedText>
-      </ThemedView> */}
+        </ThemedText> */}
+      </ThemedView> 
     </ParallaxScrollView>
   );
 }
