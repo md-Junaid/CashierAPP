@@ -1,15 +1,16 @@
 {
   "project_info": {
     "project_number": "439712938302",
+    "firebase_url": "https://cashier-app-3de7e-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "cashier-app-3de7e",
     "storage_bucket": "cashier-app-3de7e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:439712938302:android:6d54e7ad3ccf29a637146f",
+        "mobilesdk_app_id": "1:439712938302:android:a04005a94f3de4f637146f",
         "android_client_info": {
-          "package_name": "Cashier.App"
+          "package_name": "com.junaid091.CashierAPP"
         }
       },
       "oauth_client": [],
