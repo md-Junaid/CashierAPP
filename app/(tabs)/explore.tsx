@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { UserContext } from '@/components/UserContext';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { addDoc, collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 
 export default function TabTwoScreen() {
@@ -22,8 +22,10 @@ export default function TabTwoScreen() {
       id: doc.id,
       ...doc.data()
     }));
+    
+    const sortedItems = items.sort((a, b) => b.time - a.time);
 
-    setAllOrders(items);
+    setAllOrders(sortedItems);
   };
 
   useEffect(() => {
@@ -88,6 +90,18 @@ export default function TabTwoScreen() {
   const onCancel = () => {
     setValue("");
     setSelectedItems([]);
+  }
+
+  const onDeletePreviousOrder = async (order) => {
+    try {
+      const docRef = doc(db, "orders", order.id);
+      await deleteDoc(docRef);
+    }
+    catch (e) {
+      console.error("Error deleting document: ", e);
+    }
+    
+    fetchOrders();
   }
 
   const convertUnixTime = (time) => {
@@ -200,8 +214,14 @@ export default function TabTwoScreen() {
                 <ThemedText type="defaultSemiBold" style={{color: "#00b253"}}>{order.items.reduce((acc, item) => acc + item.count * item.price, 0)} MAD</ThemedText>
               </View>
             </CardContent>
-            <CardFooter style={{marginTop: 0}}>
+            <CardFooter style={{marginTop: 0, flexDirection: "row", justifyContent: "space-between"}}>
               <ThemedText type="default" style={{fontSize:13, color: "lightgrey"}}>Paid on: {convertUnixTime(order.time)}</ThemedText>
+              <Button
+                onPress={() => onDeletePreviousOrder(order)}
+                style={{ width: "10%" }}
+              >
+                <Ionicons name="trash" size={18} style={{color: "red"}} />
+              </Button> 
             </CardFooter>
           </Card>
         ))}
