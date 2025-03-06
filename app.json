@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.junaid091.CashierAPP",
+      "package": "com.soufyane.CashierAPP",
       "googleServicesFile": "./google-services.json"
     },
     "web": {
